@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 /**
  * 这个类的所有注解都是给 Feign 看的，它会根据这里的注解来去组装一个 http 请求
  * 注解 FeignClient 标注服务名
+ * 这个接口也可以额外放到一个服务中，打包，然后通过 maven 引入，这里直接使用继承的方式
  *
  * @author BarryLee
  */

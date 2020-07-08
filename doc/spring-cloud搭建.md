@@ -197,7 +197,7 @@ eureka:
 
 ![1](./img/13.png)
 
-# OpenFeign 引入
+# OpenFeign 声明式服务调用
 
 1. 准备一个 provider 服务。使用上述同样方法搭建一个 provider 服务（作为公用 API 方，比如发送各种消息的服务）：引入 web 以及 discover client 依赖；在启动类添加注解 @EnableEurekaClient；修改配置文件如下
 
@@ -399,7 +399,7 @@ provider 收到邮件：Email(email=xx@xx.com, content=打开网址xxx，激活�
 
 # Ribbon 客户端负载均衡
 
-## 默认的负载算法
+## 默认的负载策略
 
 1. 其实 OpenFeign 已经集成了 Ribbon 组件，如果上面的操作正确，那么一个轮询算法已经生效了。下面验证一下
 
@@ -473,7 +473,24 @@ eureka:
 
 ![1](./img/18.png)
 
-## 修改负载算法
+## 修改负载策略
 
+在 consumer，也就是服务的调用方中修改配置文件
 
+1. 给服务名为 provider 的服务修改负载策略为随机算法
+
+```
+provider:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+```
+
+2. 给所有服务修改负载策略为随机算法
+
+```
+ribbon:
+  NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+```
+
+其他算法类似
 
