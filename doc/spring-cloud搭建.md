@@ -399,7 +399,7 @@ provider 收到邮件：Email(email=xx@xx.com, content=打开网址xxx，激活�
 
 # Ribbon 客户端负载均衡
 
-## 默认的负载策略
+## 默认负载策略
 
 1. 其实 OpenFeign 已经集成了 Ribbon 组件，如果上面的操作正确，那么一个轮询算法已经生效了。下面验证一下
 
@@ -593,3 +593,43 @@ management:
 然后开始使用 postman 发请求
 
 ![1](./img/21.png)
+
+# Zuul 网关
+
+zuul 默认集成了：ribbon 和 hystrix
+
+1. 添加一个模块 zuul，组件选择：web, eureka client, zuul
+
+![1](./img/22.png)
+
+项目创建完成之后的目录如下
+
+![1](./img/23.png)
+
+2. 配置文件 application.yml
+
+```
+server:
+  port: 80
+spring:
+  application:
+    name: zuul
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/
+```
+
+3. 启动类添加注解
+
+```
+@EnableZuulProxy
+@EnableEurekaClient
+```
+
+4. 启动 zuul，打开 http://localhost:7900/ 能看到 zuul 已经注册到了 eureka；然后使用 postman 测试接口
+
+   http://localhost/consumer/account/register
+
+![1](./img/24.png)
+
