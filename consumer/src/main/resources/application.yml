@@ -1,0 +1,11 @@
+server:
+  port: 8800
+spring:
+  application:
+    name: consumer
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/

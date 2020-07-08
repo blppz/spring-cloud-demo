@@ -1,4 +1,4 @@
-# Eureka注册中心搭建
+# Eureka Server 注册中心搭建
 
 ## 单节点搭建
 
@@ -129,3 +129,69 @@ management.endpoint.shutdown.enabled=true
 
 
 ![1](./img/6.png)
+
+# Eureka Client 搭建
+
+1. 打开 Project  Structure，选择 Module
+
+   ![1](./img/7.png)
+
+2. 添加一个模块 consumer
+
+   ![1](./img/8.png)
+
+   ![1](./img/9.png)
+
+3. 选择 Spring Web 以及 Eureka Client，然后 Next 选择文件路径，确定，等待项目依赖加载完成
+
+![1](./img/10.png)
+
+![1](./img/11.png)
+
+4. 然后看到的项目应该是酱紫的
+
+   ![1](./img/12.png)
+
+5. 在启动类添加注解 @EnableEurekaClient
+
+   ```
+   package com.park.consumer;
+   
+   import org.springframework.boot.SpringApplication;
+   import org.springframework.boot.autoconfigure.SpringBootApplication;
+   import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+   
+   /**
+    * @author BarryLee
+    */
+   @EnableEurekaClient
+   @SpringBootApplication
+   public class ConsumerApplication {
+   
+       public static void main(String[] args) {
+           SpringApplication.run(ConsumerApplication.class, args);
+       }
+   
+   }
+   ```
+
+6. 将配置文件 application.properties 改为 application.yml
+
+```
+server:
+  port: 8800
+spring:
+  application:
+    name: consumer
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/
+```
+
+7. 启动服务，分别打开 http://localhost:7900/，http://localhost:7901/ ，http://localhost:7902/ 可以看到 consumer 已经成功注册到了注册中心
+
+![1](./img/13.png)
+
