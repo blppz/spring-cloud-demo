@@ -1,6 +1,7 @@
 package com.park.consumer.api;
 
 import com.park.consumer.domain.Email;
+import com.park.consumer.fallback.MsgFallBack;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  *
  * @author BarryLee
  */
-@FeignClient(name = "provider")
+@FeignClient(name = "provider", fallback = MsgFallBack.class)
 public interface MsgApi {
     /**
      * OpenFeign 相比较 Feign，它可以支持 SpringMVC 注解

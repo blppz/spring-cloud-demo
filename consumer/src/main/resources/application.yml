@@ -3,6 +3,7 @@ server:
 spring:
   application:
     name: consumer
+
 eureka:
   client:
     register-with-eureka: true
@@ -14,3 +15,15 @@ eureka:
 provider:
   ribbon:
     NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+
+# 启用 hystrix
+feign:
+  hystrix:
+    enabled: true
+
+# 如果需要使用 hystrix dashboard 监控当前服务，需要暴露监控信息
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

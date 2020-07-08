@@ -494,3 +494,102 @@ ribbon:
 
 其他算法类似
 
+# Hystrix 熔断、降级、限流
+
+Feign 自带 Hystrix，故不需要引入包
+
+## FallBack
+
+1. consumer 也就是服务调用方配置文件添加
+
+```
+feign:
+  hystrix:
+    enabled: true
+```
+
+2. 添加类 MsgFallBack
+
+![1](./img/19.png)
+
+```
+package com.park.consumer.fallback;
+
+import com.park.consumer.api.MsgApi;
+import com.park.consumer.domain.Email;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author BarryLee
+ * 1.需要继承 MsgApi
+ * 2.必须 spring 容器管理
+ */
+@Component
+public class MsgFallBack implements MsgApi {
+    @Override
+    public String sendEmail(Email email) {
+        System.out.println("发送邮件熔断了");
+        return "-1";
+    }
+}
+```
+
+3. consumer 的 MsgApi 接口中修改注解 
+
+```
+@FeignClient(name = "provider", fallback = MsgFallBack.class)
+```
+
+4. 开始测试，先试一下正常的调用；然后将 provider 服务全部关掉，使用 postman 调用 /register 接口
+
+控制台打印 “发送邮件熔断了”；id变成了 -1
+
+## 开启 dashboard
+
+也可以不使用这个来做监控
+
+1. consumer 引入依赖
+
+```
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+</dependency>
+<!-- hystrix dashboard -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-hystrix-dashboard</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+2. consumer 启动类添加注解
+
+```
+@EnableHystrixDashboard
+@EnableCircuitBreaker
+```
+
+3. 配置文件添加
+
+```
+# 如果需要使用 hystrix dashboard 监控当前服务，需要暴露监控信息
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+4. 重启服务，打开 http://localhost:8800/hystrix
+
+![1](./img/20.png)
+
+输入：http://localhost:8800/actuator/hystrix.stream
+
+然后开始使用 postman 发请求
+
+![1](./img/21.png)
