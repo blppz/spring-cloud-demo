@@ -1,6 +1,5 @@
 package com.park.consumer.controller;
 
-import com.netflix.discovery.converters.Auto;
 import com.park.consumer.api.MsgApi;
 import com.park.consumer.domain.Account;
 import com.park.consumer.domain.Email;
@@ -28,11 +27,12 @@ public class AccountController {
         email.setEmail(account.getEmail());
         email.setContent("打开网址xxx，激活你的账号噢");
 
-        // 调用
-        final Email res = msgApi.sendEmail(email);
-        System.out.println("consumer 收到 provider 返回结果：" + res);
+        // 使用 OpenFeign 调用
+        String res = msgApi.sendEmail(email);
+        System.out.println("consumer 收到 provider 返回端口：" + res);
 
-        account.setId(222);
+        // 设置id为调用的provider的端口，方便直接查看调用情况
+        account.setId(Integer.parseInt(res));
         return account;
     }
 

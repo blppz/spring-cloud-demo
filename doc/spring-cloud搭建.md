@@ -199,7 +199,7 @@ eureka:
 
 # OpenFeign 引入
 
-1. 准备 provider 服务。使用上述同样方法搭建一个 provider 服务（作为公用 API 方）：引入 web 以及 discover client 依赖；在启动类添加注解 @EnableEurekaClient；修改配置文件如下
+1. 准备一个 provider 服务。使用上述同样方法搭建一个 provider 服务（作为公用 API 方，比如发送各种消息的服务）：引入 web 以及 discover client 依赖；在启动类添加注解 @EnableEurekaClient；修改配置文件如下
 
    ```
    server:
@@ -217,15 +217,9 @@ eureka:
 
 ![1](./img/14.png)
 
-2. consumer 引入 OpenFeign
+2. provider 增加 lombok 依赖
 
 ```
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-openfeign</artifactId>
-</dependency>
-
-<!-- 顺便引入 lombok，免得写 get/set -->
 <dependency>
     <groupId>org.projectlombok</groupId>
     <artifactId>lombok</artifactId>
@@ -233,5 +227,253 @@ eureka:
 </dependency>
 ```
 
-3. 在 consumer 的启动类添加注解：@EnableFeignClients
-4. 
+3. provider 服务 添加两个类
+
+![1](./img/15.png)
+
+MsgController 类用来处理 consumer 发过来的请求
+
+```
+package com.park.provider.controller;
+
+import com.park.provider.domain.Email;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * @author BarryLee
+ */
+@RestController
+@RequestMapping("/msg")
+public class MsgController {
+
+    @PostMapping("/sendEmail")
+    public Email sendEmail(@RequestBody Email email) {
+        System.out.println("provider 收到邮件：" + email);
+        email.setContent("偷偷改一下内容");
+        return email;
+    }
+
+}
+```
+
+```
+package com.park.provider.domain;
+
+import lombok.Data;
+
+/**
+ * @author BarryLee
+ */
+@Data
+public class Email {
+    private String email;
+    private String content;
+}
+```
+
+4. consumer 引入 OpenFeign 组件
+
+```
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+
+<!-- 顺便引入 lombok -->
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.8</version>
+</dependency>
+```
+
+5. 在 consumer 的启动类添加注解：@EnableFeignClients
+
+6. consumer 中添加几个类，Email 同 provider
+
+![1](./img/16.png)
+
+```
+package com.park.consumer.domain;
+
+import lombok.Data;
+
+/**
+ * @author BarryLee
+ */
+@Data
+public class Account {
+    private Integer id;
+    private String username;
+    private String password;
+    private String email;
+}
+```
+
+```
+package com.park.consumer.api;
+
+import com.park.consumer.domain.Email;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+/**
+ * 这个类的所有注解都是给 Feign 看的，它会根据这里的注解来去组装一个 http 请求
+ * 注解 FeignClient 标注服务名
+ * @author BarryLee
+ */
+@FeignClient(name = "provider")
+public interface MsgApi {
+    /**
+     * OpenFeign 相比较 Feign，它可以支持 SpringMVC 注解
+     * 发送邮件
+     */
+    @PostMapping("/msg/sendEmail")
+    Email sendEmail(@RequestBody Email email);
+}
+
+```
+
+```
+package com.park.consumer.controller;
+
+import com.netflix.discovery.converters.Auto;
+import com.park.consumer.api.MsgApi;
+import com.park.consumer.domain.Account;
+import com.park.consumer.domain.Email;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * @author BarryLee
+ */
+@RestController
+@RequestMapping("/account")
+public class AccountController {
+
+    @Autowired
+    private MsgApi msgApi;
+
+    @PostMapping("/register")
+    public Account register(@RequestBody Account account) {
+        System.out.println("consumer 收到注册请求：" + account);
+
+        Email email = new Email();
+        email.setEmail(account.getEmail());
+        email.setContent("打开网址xxx，激活你的账号噢");
+
+        // 使用 OpenFeign 调用
+        final Email res = msgApi.sendEmail(email);
+        System.out.println("consumer 收到 provider 返回结果：" + res);
+
+        account.setId(222);
+        return account;
+    }
+
+}
+```
+
+7. 使用 postman 发送 post 请求测试 OpenFeign 调用
+
+![1](./img/17.png)
+
+consumer 控制台输出
+
+```
+consumer 收到注册请求：Account(id=null, username=yyyy, password=eeee, email=xx@xx.com)
+consumer 收到 provider 返回结果：Email(email=xx@xx.com, content=偷偷改一下内容)
+```
+
+provider 控制台输出
+
+```
+provider 收到邮件：Email(email=xx@xx.com, content=打开网址xxx，激活你的账号噢)
+```
+
+# Ribbon 客户端负载均衡
+
+## 默认的负载算法
+
+1. 其实 OpenFeign 已经集成了 Ribbon 组件，如果上面的操作正确，那么一个轮询算法已经生效了。下面验证一下
+
+2. 给 provider 服务添加两个配置文件，application-8901.yml 配置如下
+
+```
+server:
+  port: 8901
+spring:
+  application:
+    name: provider
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/
+```
+
+3. application-8902.yml 就跟 8901 的一样，端口号改成 8902 即可
+
+4. 在 IDEA 的 EditConfiguration  中给 provider 配置这两个配置文件
+
+5. provider 的 MsgController 类修改如下
+
+```
+    @Value("${server.port}")
+    private String port;
+
+    @PostMapping("/sendEmail")
+    public String sendEmail(@RequestBody Email email) {
+        System.out.println("provider port：" + port);
+        System.out.println("provider 收到邮件：" + email);
+        email.setContent("偷偷改一下内容");
+        return port;
+    }
+```
+
+6. consumer 的 MsgApi 修改如下
+
+```
+    @PostMapping("/msg/sendEmail")
+    String sendEmail(@RequestBody Email email);
+```
+
+7. consumer 的 AccountController 修改如下
+
+```
+    @Autowired
+    private MsgApi msgApi;
+
+    @PostMapping("/register")
+    public Account register(@RequestBody Account account) {
+        System.out.println("consumer 收到注册请求：" + account);
+
+        Email email = new Email();
+        email.setEmail(account.getEmail());
+        email.setContent("打开网址xxx，激活你的账号噢");
+
+        // 使用 OpenFeign 调用
+        String res = msgApi.sendEmail(email);
+        System.out.println("consumer 收到 provider 返回端口：" + res);
+
+		// 设置id为调用的 provider 的端口，方便直接查看调用情况
+        account.setId(Integer.parseInt(res));
+        return account;
+    }
+```
+
+8. 下面开始测试，使用 postman 反复调用接口，可以发现端口是轮询出现的
+
+![1](./img/18.png)
+
+## 修改负载算法
+
+
+
