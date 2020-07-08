@@ -1,20 +1,18 @@
-package com.park.consumer;
+package com.park.provider;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * @author BarryLee
  */
-@EnableFeignClients
-@EnableEurekaClient
 @SpringBootApplication
-public class ConsumerApplication {
+@EnableEurekaClient
+public class ProviderApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ConsumerApplication.class, args);
+        SpringApplication.run(ProviderApplication.class, args);
     }
 
 }
