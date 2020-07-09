@@ -598,6 +598,8 @@ management:
 
 zuul 默认集成了：ribbon 和 hystrix
 
+## 启用网关
+
 1. 添加一个模块 zuul，组件选择：web, eureka client, zuul
 
 ![1](./img/22.png)
@@ -632,4 +634,50 @@ eureka:
    http://localhost/consumer/account/register
 
 ![1](./img/24.png)
+
+## 负载策略
+
+使用起来与 consumer 一样。都是 Ribbon，默认情况下也是轮询策略
+
+1. 单个服务配置方式：
+
+```
+consumer:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+```
+
+2. 全局配置方式，在任意被 spring 管理的类，比如启动类或者 @Component 的类中添加如下配置
+
+```
+@Bean
+public IRule ribbonRule() {
+	return new RandomRule();
+}
+```
+
+3. 测试。在 consumer 中添加如下代码进行测试
+
+```
+@Value("${server.port}")
+private String port;
+
+@GetMapping("/zuul")
+public String testZuul() {
+	return port;
+}
+```
+
+![1](./img/25.png)
+
+多次发送请求可以发现负载策略已经被修改
+
+## 路由端点
+
+```
+management.endpoints.web.exposure.include=*
+management.endpoint.health.show-details=always
+management.endpoint.health.enabled=true
+management.endpoint.routes.enabled=true
+```
 

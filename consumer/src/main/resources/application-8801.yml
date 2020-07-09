@@ -1,0 +1,29 @@
+server:
+  port: 8801
+spring:
+  application:
+    name: consumer
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/
+
+# 修改 Ribbon 负载策略，provider 为具体服务的服务名
+provider:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+
+# 启用 hystrix
+feign:
+  hystrix:
+    enabled: true
+
+# 如果需要使用 hystrix dashboard 监控当前服务，需要暴露监控信息
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

@@ -4,10 +4,8 @@ import com.park.consumer.api.MsgApi;
 import com.park.consumer.domain.Account;
 import com.park.consumer.domain.Email;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author BarryLee
@@ -15,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/account")
 public class AccountController {
+
+    @Value("${server.port}")
+    private String port;
 
     @Autowired
     private MsgApi msgApi;
@@ -34,6 +35,11 @@ public class AccountController {
         // 设置id为调用的provider的端口，方便直接查看调用情况
         account.setId(Integer.parseInt(res));
         return account;
+    }
+
+    @GetMapping("/zuul")
+    public String testZuul() {
+        return port;
     }
 
 }

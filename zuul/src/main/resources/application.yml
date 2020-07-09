@@ -7,3 +7,20 @@ eureka:
   client:
     service-url:
       defaultZone: http://eureka-7901:7901/eureka/
+
+consumer:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      enabled: true
+    routes:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
