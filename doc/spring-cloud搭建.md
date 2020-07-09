@@ -753,19 +753,23 @@ spring:
 	<artifactId>spring-boot-starter-actuator</artifactId>
 	<version>2.2.1</version>
 </dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
 ```
 
 在配置文件添加
 
 ```
-# 上报健康信息到admin
+# 上报健康信息到 admin
 spring:
   boot:
     admin:
       client:
         url: http://localhost:6010/
 
-#暴露端点
+# 暴露端点
 management:
   endpoints:
     web:
@@ -777,6 +781,124 @@ management:
 
 ![1](./img/29.png)
 
-点开可以看到细节
+点开可以看到详细信息
 
 ![1](./img/30.png)
+
+# Config 配置中心
+
+裂墙推荐：http://jm.taobao.org/2016/09/28/an-article-about-config-center/
+
+## 服务端搭建
+
+1. 继续添加 module config，依赖选择 config server，eureka client
+
+![1](./img/31.png)
+
+现在的项目结构
+
+![1](./img/32.png)
+
+2. 启动类添加注解
+
+```
+@EnableConfigServer
+```
+
+3. 配置文件
+
+```
+server:
+  port: 5900
+
+spring:
+  application:
+    name: config
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/{你的Git}/config-center.git
+      label: master
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/
+```
+
+## Git 仓库
+
+1. 在你的 git 新建一个仓库：config-server
+2. 新增一个文件：application-test.yml
+
+```
+server:
+  port: 8800
+
+spring:
+  application:
+    name: consumer
+  boot:
+    admin:
+      client:
+        url: http://localhost:6010/
+  #zipkin
+  zipkin:
+    base-url: http://localhost:9411/
+    #采样比例1
+  sleuth:
+    sampler:
+      rate: 1
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/
+
+# 修改 Ribbon 负载策略，provider 为具体服务的服务名
+provider:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+
+# 启用 hystrix
+feign:
+  hystrix:
+    enabled: true
+
+# 如果需要监控当前服务，需要暴露监控信息
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+3. 打开 http://localhost:5900/application-test.yml 可以看到页面显示了仓库中的 application-test.yml文档，也就是我们的服务端 ready 了
+
+## 客户端配置
+
+1. 比如 consumer，首先，引入 spring cloud config client 依赖
+
+```
+<!-- config-client -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-config-client</artifactId>
+</dependency>
+```
+
+2. 
+
+```
+#直接URL方式查找配置中心
+spring.cloud.config.uri=http://localhost:9999/
+#通过注册中心查找
+#spring.cloud.config.discovery.enabled=true
+#spring.cloud.config.discovery.service-id=a-config
+spring.cloud.config.profile=dev
+spring.cloud.config.label=dev
+```
+

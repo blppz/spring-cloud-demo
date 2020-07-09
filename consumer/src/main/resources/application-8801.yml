@@ -1,5 +1,6 @@
 server:
   port: 8801
+
 spring:
   application:
     name: consumer
@@ -14,6 +15,7 @@ spring:
   sleuth:
     sampler:
       rate: 1
+
 eureka:
   client:
     register-with-eureka: true
