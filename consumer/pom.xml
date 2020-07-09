@@ -32,6 +32,12 @@
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
+        <!-- zipkin -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-zipkin</artifactId>
+        </dependency>
+
         <!-- 顺便引入 lombok，免得写 get/set -->
         <dependency>
             <groupId>org.projectlombok</groupId>

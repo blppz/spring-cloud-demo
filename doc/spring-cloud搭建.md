@@ -40,14 +40,17 @@ public class EurekaServerApplication {
 5. 将 application.properties 配置文件改为 application.yml
 
 ```
-#这个和service-url一致，否则会发现unavailable
-server.port=7900
-#是否将自己注册到Eureka Server,默认为true，由于当前就是server，故而设置成false，表明该服务不会向eureka注册自己的信息
-eureka.client.register-with-eureka=false
-#是否从eureka server获取注册信息，由于单节点，不需要同步其他节点数据，用false
-eureka.client.fetch-registry=false
-#设置服务注册中心的URL，用于client和server端交流
-eureka.client.service-url.defaultZone=http://localhost:7900/eureka/
+server:
+  port: 7900
+eureka:
+  client:
+    #是否将自己注册到Eureka Server,默认为true，由于当前就是server，故而设置成false，表明该服务不会向eureka注册自己的信息
+    register-with-eureka: false
+    #是否从eureka server获取注册信息，由于单节点，不需要同步其他节点数据，用false
+    fetch-registry: false
+    service-url:
+      #设置服务注册中心的URL，用于client和server端交流
+      defaultZone: http://localhost:7900/eureka/
 ```
 
 6. 启动，然后打开  http://localhost:7900/  
@@ -672,12 +675,49 @@ public String testZuul() {
 
 多次发送请求可以发现负载策略已经被修改
 
-## 路由端点
+## Hystrix
+
+# Zipkin 链路追踪
+
+1. 到官网下载 server 端：https://zipkin.io/
+
+![1](./img/26.png)
+
+windows 下测试，直接 java -jar zipkin-server-2.21.5-exec.jar 启动
+
+2. 启动之后打开 http://localhost:9411/zipkin/ ，可以看到已经部署成功
+3. 在需要进行链路追踪的服务 比如 zuul、consumer、provider 的 pom 中添加依赖
 
 ```
-management.endpoints.web.exposure.include=*
-management.endpoint.health.show-details=always
-management.endpoint.health.enabled=true
-management.endpoint.routes.enabled=true
+<!-- zipkin -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-zipkin</artifactId>
+</dependency>
 ```
+
+在配置文件中添加
+
+```
+spring:
+  #zipkin
+  zipkin:
+    base-url: http://localhost:9411/
+  #采样比例1
+  sleuth:
+    sampler:
+      rate: 1
+```
+
+4. 发送请求，比如前面已经写好的：
+
+   http://localhost/consumer/account/zuul
+
+   http://localhost/consumer/account/register
+
+5. 此时在 zipkin 的页面中已经可以看到请求
+
+![1](./img/27.png)
+
+# Admin 健康检查
 
