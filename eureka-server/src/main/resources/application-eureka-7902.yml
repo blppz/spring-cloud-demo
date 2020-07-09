@@ -1,5 +1,13 @@
 server:
   port: 7902
+spring:
+  application:
+    name: eureka-server
+  boot:
+    admin:
+      client:
+        url: http://localhost:6010/
+
 eureka:
   client:
     #是否将自己注册到Eureka Server,默认为true，由于当前就是server，故而设置成false，表明该服务不会向eureka注册自己的信息
@@ -11,3 +19,10 @@ eureka:
       defaultZone: http://eureka-7900:7900/eureka/,http://eureka-7901:7901/eureka/
   instance:
     hostname: eureka-7902
+
+# 如果需要监控当前服务，需要暴露监控信息
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

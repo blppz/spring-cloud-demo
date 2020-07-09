@@ -721,3 +721,62 @@ spring:
 
 # Admin 健康检查
 
+1. 创建 module admin，勾选依赖或者直接手动添加
+
+![1](./img/28.png)
+
+```
+<!-- Admin 服务 -->
+<dependency>
+    <groupId>de.codecentric</groupId>
+    <artifactId>spring-boot-admin-starter-server</artifactId>
+</dependency>
+
+<!-- Admin 界面 -->
+<dependency>
+    <groupId>de.codecentric</groupId>
+    <artifactId>spring-boot-admin-server-ui</artifactId>
+</dependency>
+```
+
+2. 启动类添加注解
+
+```
+@EnableAdminServer
+```
+
+3. 在需要被监控的服务 pom 添加依赖
+
+```
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-actuator</artifactId>
+	<version>2.2.1</version>
+</dependency>
+```
+
+在配置文件添加
+
+```
+# 上报健康信息到admin
+spring:
+  boot:
+    admin:
+      client:
+        url: http://localhost:6010/
+
+#暴露端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+4. 重启服务，打开 http://localhost:6010/wallboard
+
+![1](./img/29.png)
+
+点开可以看到细节
+
+![1](./img/30.png)
