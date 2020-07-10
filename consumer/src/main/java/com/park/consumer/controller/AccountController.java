@@ -5,17 +5,25 @@ import com.park.consumer.domain.Account;
 import com.park.consumer.domain.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * @author BarryLee
  */
+@RefreshScope
 @RestController
 @RequestMapping("/account")
 public class AccountController {
 
     @Value("${server.port}")
     private String port;
+
+    /**
+     * 从配置文件读取，用来测试配置文件是否更新成功
+     */
+    @Value("${configText}")
+    private String configText;
 
     @Autowired
     private MsgApi msgApi;
@@ -40,6 +48,11 @@ public class AccountController {
     @GetMapping("/zuul")
     public String testZuul() {
         return port;
+    }
+
+    @GetMapping("/testConfig")
+    public String testConfig() {
+        return configText;
     }
 
 }

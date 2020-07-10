@@ -791,7 +791,7 @@ management:
 
 ## 服务端搭建
 
-1. 继续添加 module config，依赖选择 config server，eureka client
+1. 继续添加 module config，依赖选择 config server，eureka client，actuator
 
 ![1](./img/31.png)
 
@@ -830,7 +830,7 @@ eureka:
 ## Git 仓库
 
 1. 在你的 git 新建一个仓库：config-server
-2. 新增一个文件：application-test.yml
+2. 新增一个文件：consumer-dev.yml
 
 ```
 server:
@@ -874,13 +874,18 @@ management:
     web:
       exposure:
         include: "*"
+
+# 用来测试能否通过配置中心更新配置
+configText: park111
 ```
 
-3. 打开 http://localhost:5900/application-test.yml 可以看到页面显示了仓库中的 application-test.yml文档，也就是我们的服务端 ready 了
+3. 打开 http://localhost:5900/application-test.yml 可以看到页面显示了仓库中的 consumer-dev.yml文档，也就是我们的配置中心 server 端 ready 了
 
 ## 客户端配置
 
-1. 比如 consumer，首先，引入 spring cloud config client 依赖
+### 手动刷新配置
+
+1. 比如 consumer，首先，引入 spring cloud config client，以及 actuator 依赖
 
 ```
 <!-- config-client -->
@@ -888,17 +893,65 @@ management:
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-config-client</artifactId>
 </dependency>
+<!-- actuator -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
 ```
 
-2. 
+2. 将 application.yml 配置文件改成 **bootstrap.properties** 
 
 ```
-#直接URL方式查找配置中心
-spring.cloud.config.uri=http://localhost:9999/
-#通过注册中心查找
-#spring.cloud.config.discovery.enabled=true
-#spring.cloud.config.discovery.service-id=a-config
+#配置中心
+spring.cloud.config.uri=http://localhost:5900
+
+#git 分支
+spring.cloud.config.label=master
+
+#下面两个配置，相当于启用配置文件：application-test.yml，这里就是 consumer-dev.yml
+#application 部分
+spring.cloud.config.name=consumer
+#profile 部分
 spring.cloud.config.profile=dev
-spring.cloud.config.label=dev
+
+#refresh 允许更新，也可以用 * 来暴露所有端点
+management.endpoints.web.exposure.include=*
 ```
 
+3. consumer 的 AccountController 类加入注解，加入这个注解之后，当前类的所有 @Value 注解都会被更新
+
+```
+@RefreshScope
+```
+
+4. AccountController 类加入代码，用来测试配置文件更新
+
+```
+/**
+ * 从配置文件读取，用来测试配置文件是否更新成功
+ */
+@Value("${configText}")
+private String configText;
+
+@GetMapping("/testConfig")
+    public String testConfig() {
+    return configText;
+}
+```
+
+5. 启动 consumer 测试一下是否从配置中心拉取了配置文件 consumer-dev.yml，发送一个 get 请求：http://localhost:8800/account/testConfig ，返回了 configText，说明拉取成功
+6. 更新 git 上配置文件 consumer-dev.yml 中的 configText 为 park222
+
+```
+# 用来测试能否通过配置中心更新配置
+configText: park222
+```
+
+7. 手动刷新，调用 post 请求，http://localhost:8800/actuator/refresh
+
+![1](./img/33.png)
+
+8. 再次发送一个 get 请求：http://localhost:8800/account/testConfig ，可以看到此时 configText 已经变成了 park222，说明手动刷新配置文件成功
+
+### 自动刷新配置
