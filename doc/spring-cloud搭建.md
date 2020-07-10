@@ -2,15 +2,15 @@
 
 ## 单节点搭建
 
-1. File -> new -> project 新建项目，然后选择镜像：https://start.aliyun.com
+1. File -> new -> project 新建项目，然后更换镜像：https://start.aliyun.com
 
 ![1](./img/1.png)
 
-2. 写 maven 配置
+2. 输入 maven 配置
 
 ![1](./img/2.png)
 
-3. 选择Eureka Server，然后 Next 选择文件路径，确定，等待项目依赖加载完成
+3. 选择 Eureka Server 依赖，然后 Next 选择文件路径，确定，等待项目依赖加载完成
 
 ![1](./img/3.png)
 
@@ -879,11 +879,11 @@ management:
 configText: park111
 ```
 
-3. 打开 http://localhost:5900/application-test.yml 可以看到页面显示了仓库中的 consumer-dev.yml文档，也就是我们的配置中心 server 端 ready 了
+3. 打开 http://localhost:5900/consumer-dev.yml 可以看到页面显示了仓库中的 consumer-dev.yml文档，也就是我们的配置中心 server 端 ready 了
 
 ## 客户端配置
 
-### 手动刷新配置
+### actuator 刷新配置
 
 1. 比如 consumer，首先，引入 spring cloud config client，以及 actuator 依赖
 
@@ -954,4 +954,124 @@ configText: park222
 
 8. 再次发送一个 get 请求：http://localhost:8800/account/testConfig ，可以看到此时 configText 已经变成了 park222，说明手动刷新配置文件成功
 
-### 自动刷新配置
+### amqp 刷新配置
+
+1. 安装 Erlang：https://www.erlang.org/downloads
+
+   下载 22.3 版本，**不要下载 23.0**，坑巨多就是了
+
+   下载之后，使用**管理员身份运行**，不建议使用默认安装路径；安装完之后，需要配置环境变量
+
+![1](./img/35.png)
+
+​	配置好环境变量之后，cmd 随便一个位置输入 erl
+
+![1](./img/36.png)
+
+2. 安装 RabbitMQ (windows下)：https://www.rabbitmq.com/download.html
+
+![1](./img/34.png)
+
+​	安装好之后，到其 sbin 目录下，打开 cmd，输入指令
+
+```
+rabbitmq-plugins enable rabbitmq_management
+```
+
+![1](./img/37.png)
+
+​	之后在 sbin 目录下双击 rabbitmq-server.bat
+
+​	然后打开 http://localhost:15672/ ，用户名、密码都是 guest
+
+![1](./img/38.png)
+
+3. config server 和 consumer 都要添加依赖
+
+```
+<!-- bus-amqp -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+```
+
+4. config server 目前的配置，主要是添加了 rabbitmq
+
+```
+server:
+  port: 5900
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        #git地址
+        git:
+          uri: https://github.com/blppz/config-center.git/
+      #git分支
+      label: master
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-7901:7901/eureka/
+```
+
+5. consumer 的 bootstrap.properties 目前为
+
+```
+#配置中心
+spring.cloud.config.uri=http://localhost:5900
+
+#git 分支
+spring.cloud.config.label=master
+
+#下面两个配置，相当于启用配置文件：application-test.yml，这里就是 consumer-dev.yml
+#application 部分
+spring.cloud.config.name=consumer
+#profile 部分
+spring.cloud.config.profile=dev
+
+#暴露所有端点
+management.endpoints.web.exposure.include=*
+
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=guest
+spring.rabbitmq.password=guest
+```
+
+6. 重启这两个服务。
+
+   a. 瞄一眼当前 git 中的 configText 为 park111，GET 请求一下：http://localhost:8800/account/testConfig
+
+   b. 然后修改 git 中的 configText 为 park222，再请求一下：http://localhost:8800/account/testConfig ，发现并没有改变
+
+   c. POST 请求：http://localhost:8800/actuator/bus-refresh ，再调用 testConfig
+
+### webhooks 的配置自动刷新
+
+1. 打开配置中心的 git 仓库，添加一个 webhooks
+
+![1](./img/39.png)
+
+2. Payload URL 填写的是刷新的地址，git 能访问的地址，如果是内网，那公司的 gitlab 仓库也能访问
+
+​	http://host:port/actuator/refresh
+
+​	或者
+
+​	http://host:port/actuator/bus-refresh
+
+3. 如果 Secret 写了，就在配置文件中填写 encrypt.key 与之对应即可
+
+![1](./img/40.png)
+
