@@ -71,10 +71,10 @@
         </dependency>
 
         <!-- bus-amqp -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bus-amqp</artifactId>
-        </dependency>
+        </dependency>-->
 
         <!-- actuator -->
         <dependency>

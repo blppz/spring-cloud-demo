@@ -14,7 +14,7 @@
 
 ![1](./img/3.png)
 
-4. 在启动类加上 @EnableEurekaServer 注解
+4. 在启动类加上 @EnableEurekaServer 注解，表示这是一个注册中心服务端
 
 ```java
 package com.park.eurekaserver;
@@ -42,6 +42,7 @@ public class EurekaServerApplication {
 ```
 server:
   port: 7900
+
 eureka:
   client:
     #是否将自己注册到Eureka Server,默认为true，由于当前就是server，故而设置成false，表明该服务不会向eureka注册自己的信息
@@ -68,11 +69,12 @@ host文件末尾加上
 127.0.0.1 eureka-7902
 ```
 
-2. 在上述操作的基础上，添加一个文件 application-eureka-7900.yml
+2. 在上述操作的基础上，添加一个配置文件 application-eureka-7900.yml
 
 ```
 server:
   port: 7900
+
 eureka:
   client:
     #是否将自己注册到Eureka Server,默认为true，由于当前就是server，故而设置成false，表明该服务不会向eureka注册自己的信息
@@ -92,6 +94,7 @@ eureka:
 ```
 server:
   port: 7901
+
 eureka:
   client:
     #是否将自己注册到Eureka Server,默认为true，由于当前就是server，故而设置成false，表明该服务不会向eureka注册自己的信息
@@ -110,6 +113,7 @@ eureka:
 ```
 server:
   port: 7902
+
 eureka:
   client:
     #是否将自己注册到Eureka Server,默认为true，由于当前就是server，故而设置成false，表明该服务不会向eureka注册自己的信息
@@ -123,11 +127,11 @@ eureka:
     hostname: eureka-7902
 ```
 
-5. 到这里，就搭建完了，然后运行起来
+5. 关掉原来的单节点服务，Edit Configurations  ...
 
 ![1](./img/4.png)
 
-6. 复制三个，并指定 profile，其他两个一样
+6. 选中 EurekaServerApplication 复制三个；三个都修改 Name，并指定 Active profiles
 
    然后确定，指定这三个配置文件将服务启动起来，中间肯定会有报错的，因为在相互注册，而其他的服务还没起来，起来之后打开：http://localhost:7900/ ，unavaliable 一定是空的才对
 
@@ -141,7 +145,7 @@ eureka:
 
    ![1](./img/7.png)
 
-2. 添加一个模块 consumer
+2. 添加一个 new module 模块 consumer
 
    ![1](./img/8.png)
 
@@ -157,30 +161,30 @@ eureka:
 
    ![1](./img/12.png)
 
-5. 在启动类添加注解 @EnableEurekaClient
+5. 在启动类添加注解 @EnableEurekaClient，表示这是一个注册中心的客户端
 
-   ```
-   package com.park.consumer;
-   
-   import org.springframework.boot.SpringApplication;
-   import org.springframework.boot.autoconfigure.SpringBootApplication;
-   import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
-   
-   /**
-    * @author BarryLee
-    */
-   @EnableEurekaClient
-   @SpringBootApplication
-   public class ConsumerApplication {
-   
-       public static void main(String[] args) {
-           SpringApplication.run(ConsumerApplication.class, args);
-       }
-   
-   }
-   ```
+```
+package com.park.consumer;
 
-6. 将配置文件 application.properties 改为 application.yml
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+
+/**
+ * @author BarryLee
+ */
+@EnableEurekaClient
+@SpringBootApplication
+public class ConsumerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ConsumerApplication.class, args);
+    }
+
+}
+```
+
+4. 将配置文件 application.properties 改为 application.yml
 
 ```
 server:
@@ -191,9 +195,8 @@ spring:
 eureka:
   client:
     register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 ```
 
 7. 启动服务，分别打开 http://localhost:7900/，http://localhost:7901/ ，http://localhost:7902/ 可以看到 consumer 已经成功注册到了注册中心
@@ -202,21 +205,25 @@ eureka:
 
 # OpenFeign 声明式服务调用
 
-1. 准备一个 provider 服务。使用上述同样方法搭建一个 provider 服务（作为公用 API 方，比如发送各种消息的服务）：引入 web 以及 discover client 依赖；在启动类添加注解 @EnableEurekaClient；修改配置文件如下
+1. 准备一个 provider 服务。使用上述同样方法搭建一个 provider 服务（作为公用 API 方，比如发送各种消息的服务）：引入 web 以及 discover client 依赖；在启动类添加注解 @EnableEurekaClient；
 
-   ```
-   server:
-     port: 8800
-   spring:
-     application:
-       name: consumer
-   eureka:
-     client:
-       register-with-eureka: true
-       fetch-registry: true
-       service-url:
-         defaultZone: http://eureka-7901:7901/eureka/
-   ```
+   修改配置文件如下
+
+```
+server:
+  port: 8800
+spring:
+  application:
+  	# 服务名为 consumer
+    name: consumer
+eureka:
+  client:
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:7900/eureka/
+```
+
+启动服务，打开 eureka，看到 provider 也注册了
 
 ![1](./img/14.png)
 
@@ -230,7 +237,7 @@ eureka:
 </dependency>
 ```
 
-3. provider 服务 添加两个类
+3. provider 服务添加两个类
 
 ![1](./img/15.png)
 
@@ -400,6 +407,8 @@ provider 控制台输出
 provider 收到邮件：Email(email=xx@xx.com, content=打开网址xxx，激活你的账号噢)
 ```
 
+这整个过程就是：postman 发起一个请求到 consumer，consumer 接到请求使用 OpenFeign 发送了请求给provider
+
 # Ribbon 客户端负载均衡
 
 ## 默认负载策略
@@ -411,15 +420,16 @@ provider 收到邮件：Email(email=xx@xx.com, content=打开网址xxx，激活�
 ```
 server:
   port: 8901
+
 spring:
   application:
     name: provider
+
 eureka:
   client:
     register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 ```
 
 3. application-8902.yml 就跟 8901 的一样，端口号改成 8902 即可
@@ -488,11 +498,13 @@ provider:
     NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
 ```
 
-2. 给所有服务修改负载策略为随机算法
+2. 全局配置方式，在任意被 spring 管理的类，比如启动类或者 @Component 的类中添加如下配置
 
 ```
-ribbon:
-  NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+@Bean
+public IRule ribbonRule() {
+	return new RandomRule();
+}
 ```
 
 其他算法类似
@@ -622,7 +634,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 ```
 
 3. 启动类添加注解
@@ -642,7 +654,7 @@ eureka:
 
 使用起来与 consumer 一样。都是 Ribbon，默认情况下也是轮询策略
 
-1. 单个服务配置方式：
+1. 单个服务配置方式如下，整体配置看文档的 Ribbon 部分
 
 ```
 consumer:
@@ -650,16 +662,7 @@ consumer:
     NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
 ```
 
-2. 全局配置方式，在任意被 spring 管理的类，比如启动类或者 @Component 的类中添加如下配置
-
-```
-@Bean
-public IRule ribbonRule() {
-	return new RandomRule();
-}
-```
-
-3. 测试。在 consumer 中添加如下代码进行测试
+2. 测试。在 consumer 中添加如下代码进行测试
 
 ```
 @Value("${server.port}")
@@ -824,7 +827,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 ```
 
 ## Git 仓库
@@ -833,9 +836,6 @@ eureka:
 2. 新增一个文件：consumer-dev.yml
 
 ```
-server:
-  port: 8800
-
 spring:
   application:
     name: consumer
@@ -856,7 +856,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 
 # 修改 Ribbon 负载策略，provider 为具体服务的服务名
 provider:
@@ -1022,7 +1022,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 ```
 
 5. consumer 的 bootstrap.properties 目前为
@@ -1057,7 +1057,9 @@ spring.rabbitmq.password=guest
 
    c. POST 请求：http://localhost:8800/actuator/bus-refresh ，再调用 testConfig
 
-### webhooks 的配置自动刷新
+### webhooks 配置自动刷新
+
+一般不建议使用自动刷新，因为很难保证修改之后的配置文件是正确的，实在需要配置，那也是先在单台机器上刷新测试过配置文件没问题再批量的自动刷新
 
 1. 打开配置中心的 git 仓库，添加一个 webhooks
 

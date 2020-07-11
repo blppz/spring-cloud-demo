@@ -18,10 +18,8 @@ spring:
 
 eureka:
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 
 # 如果需要监控当前服务，需要暴露监控信息
 management:

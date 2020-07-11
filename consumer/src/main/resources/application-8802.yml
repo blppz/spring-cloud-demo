@@ -18,10 +18,8 @@ spring:
 
 eureka:
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://eureka-7901:7901/eureka/
+      defaultZone: http://localhost:7900/eureka/
 
 # 修改 Ribbon 负载策略，provider 为具体服务的服务名
 provider:
