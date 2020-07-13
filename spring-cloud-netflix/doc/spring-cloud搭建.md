@@ -788,9 +788,9 @@ management:
 
 ![1](./img/30.png)
 
-# Config 配置中心
+一般服务下线都需要配置邮件或者钉钉消息来使用
 
-裂墙推荐：http://jm.taobao.org/2016/09/28/an-article-about-config-center/
+# Config 配置中心
 
 ## 服务端搭建
 
@@ -885,6 +885,8 @@ configText: park111
 
 ### actuator 刷新配置
 
+此配置可以刷新单一个服务的单一个节点的配置
+
 1. 比如 consumer，首先，引入 spring cloud config client，以及 actuator 依赖
 
 ```
@@ -956,6 +958,8 @@ configText: park222
 
 ### amqp 刷新配置
 
+此配置可以刷新一整个服务所有节点的配置
+
 1. 安装 Erlang：https://www.erlang.org/downloads
 
    下载 22.3 版本，**不要下载 23.0**，坑巨多就是了
@@ -972,9 +976,12 @@ configText: park222
 
 ![1](./img/34.png)
 
-​	安装好之后，到其 sbin 目录下，打开 cmd，输入指令
+​	安装好之后，到其 sbin 目录下，打开 cmd，输入一下两个指令
 
 ```
+# 开启RabbitMQ节点
+rabbitmqctl start_app
+# 开启RabbitMQ管理模块的插件，并配置到RabbitMQ节点上
 rabbitmq-plugins enable rabbitmq_management
 ```
 
@@ -1059,7 +1066,7 @@ spring.rabbitmq.password=guest
 
 ### webhooks 配置自动刷新
 
-一般不建议使用自动刷新，因为很难保证修改之后的配置文件是正确的，实在需要配置，那也是先在单台机器上刷新测试过配置文件没问题再批量的自动刷新
+**一般不建议使用自动刷新**，因为很难保证修改之后的配置文件是正确的，实在需要配置，那也是先在单台机器上刷新测试过配置文件没问题再批量的自动刷新
 
 1. 打开配置中心的 git 仓库，添加一个 webhooks
 
