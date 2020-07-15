@@ -1,4 +1,4 @@
-package com.park.gateway.config;
+package com.park.gateway.route;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.NacosFactory;
@@ -18,8 +18,7 @@ public class DynamicRouteServiceImplByNacos {
     private DynamicRouteServiceImpl dynamicRouteService;
 
     public DynamicRouteServiceImplByNacos() {
-
-        dynamicRouteByNacosListener("sc-gateway","xujin_test");
+        dynamicRouteByNacosListener("gateway","park");
     }
 
     /**
@@ -29,7 +28,10 @@ public class DynamicRouteServiceImplByNacos {
      */
     public void dynamicRouteByNacosListener (String dataId, String group){
         try {
-            ConfigService configService= NacosFactory.createConfigService("127.0.0.1:8848");
+            System.out.println(
+                "===dynamicRouteByNacosListener===, " + dataId + ", " + group
+            );
+            ConfigService configService=NacosFactory.createConfigService("127.0.0.1:8848");
             String content = configService.getConfig(dataId, group, 5000);
             System.out.println(content);
             configService.addListener(dataId, group, new Listener()  {
@@ -44,6 +46,7 @@ public class DynamicRouteServiceImplByNacos {
                 }
             });
         } catch (NacosException e) {
+            e.printStackTrace();
             //todo 提醒:异常自行处理此处省略
         }
     }

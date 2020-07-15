@@ -1,33 +1,57 @@
-package com.park.gateway.config;
+package com.park.gateway.route;
 
+import com.alibaba.fastjson.JSON;
+import com.park.gateway.model.GatewayPredicateDefinition;
+import com.park.gateway.model.GatewayRouteDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
+import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinitionWriter;
-import org.springframework.cloud.gateway.support.NotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class DynamicRouteServiceImpl implements ApplicationEventPublisherAware {
+
     @Autowired
     private RouteDefinitionWriter routeDefinitionWriter;
+
     private ApplicationEventPublisher publisher;
-    //增加路由
+
+
+    /**
+     * 增加路由
+     *
+     * @param definition
+     * @return
+     */
     public String add(RouteDefinition definition) {
         routeDefinitionWriter.save(Mono.just(definition)).subscribe();
         this.publisher.publishEvent(new RefreshRoutesEvent(this));
         return "success";
     }
-    //更新路由
+
+
+    /**
+     * 更新路由
+     *
+     * @param definition
+     * @return
+     */
     public String update(RouteDefinition definition) {
         try {
             this.routeDefinitionWriter.delete(Mono.just(definition.getId()));
         } catch (Exception e) {
-            return "update fail,not find route  routeId: "+definition.getId();
+            return "update fail,not find route  routeId: " + definition.getId();
         }
         try {
             routeDefinitionWriter.save(Mono.just(definition)).subscribe();
@@ -36,15 +60,30 @@ public class DynamicRouteServiceImpl implements ApplicationEventPublisherAware {
         } catch (Exception e) {
             return "update route  fail";
         }
+
+
     }
-    //删除路由
-    public Mono<ResponseEntity<Object>> delete(String id) {
-        return this.routeDefinitionWriter.delete(Mono.just(id))
-                .then(Mono.defer(() -> Mono.just(ResponseEntity.ok().build())))
-                .onErrorResume(t -> t instanceof NotFoundException, t -> Mono.just(ResponseEntity.notFound().build()));
+
+    /**
+     * 删除路由
+     *
+     * @param id
+     * @return
+     */
+    public String delete(String id) {
+        try {
+            this.routeDefinitionWriter.delete(Mono.just(id));
+            return "delete success";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "delete fail";
+        }
+
     }
+
     @Override
     public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
         this.publisher = applicationEventPublisher;
     }
+
 }
