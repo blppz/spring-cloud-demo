@@ -1,0 +1,28 @@
+server:
+  port: 9900
+
+spring:
+  application:
+    name: provider-service
+  cloud:
+    nacos:
+      discovery:
+        namespace: 824219a8-c18e-4f04-b9c4-0175bc6ed602
+        server-addr: 127.0.0.1:8848
+      config:
+        namespace: 824219a8-c18e-4f04-b9c4-0175bc6ed602
+  #作用未知
+  main:
+    allow-bean-definition-overriding: true
+
+dubbo:
+  protocol:
+    id: dubbo
+    # Dubbo 服务暴露的协议配置，其中子属性 name 为协议名称，port 为协议端口（ -1 表示自增端口，从 20880 开始）
+    name: dubbo
+    port: -1
+  registry:
+    # 挂载到 Spring Cloud 注册中心
+    address: spring-cloud://localhost
+  scan:
+    base-packages: com.park.providerservice
